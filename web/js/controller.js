@@ -25,14 +25,12 @@ function Controller() {
                 object = object[properties[i]];
             object[last] = v;
         });
-        console.log(cb);
         return cb;
     }
 
-    this.setXCb = this.proxy(['position', 'x']).min(-50).max(50);
-    console.log(this.setXCb);
-    this.setYCb = this.proxy(['position', 'y']).min(-50).max(50);
-    this.setZCb = this.proxy(['position', 'z']).min(-50).max(50);
+    this.setXCb = this.proxy(['position', 'x']);
+    this.setYCb = this.proxy(['position', 'y']);
+    this.setZCb = this.proxy(['position', 'z']);
 }
 
 Controller.prototype = Object.create(THREE.Object3D.prototype);
@@ -40,7 +38,7 @@ Controller.prototype.constructor = Controller;
 
 /**************/
 Controller.prototype.setCurrent = function(object) {
-    this.current = object;
+    this.current = object.parent;
     if (this.current) {
         this.setXCb.setValue(object.parent.position.x);
         this.setYCb.setValue(object.parent.position.y);
