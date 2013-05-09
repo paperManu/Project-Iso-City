@@ -1,7 +1,7 @@
 function cos(x) {return Math.cos(x);}
 function sin(x) {return Math.sin(x);}
 
-var _renderer, _scene, _camera;
+var _renderer, _scene, _camera, _controller;
 var _height, _width;
 
 /*************/
@@ -35,14 +35,14 @@ function init() {
 
     document.body.appendChild(_renderer.domElement);
 
-    _width = _renderer.domElement.width;
-    _height = _renderer.domElement.height
+    _width = window.innerWidth;
+    _height = window.innerHeight;
 
     _scene = new THREE.Scene();
 
     camDirection = new THREE.Vector3(16, 0, 16);
 
-    var ratio = window.innerWidth / window.innerHeight;
+    var ratio = _width / _height;
     _camera = new THREE.OrthographicCamera(-cFOV, cFOV, cFOV/ratio, -cFOV/ratio, 1, 1000);
     //_camera = new THREE.PerspectiveCamera(45, _width/_height, 1, 1000);
     _camera.position = camPosition.setLength(100);
@@ -60,6 +60,9 @@ function init() {
     pointLight.position.z = 500;
     _scene.add(ambientLight);
     _scene.add(pointLight);
+
+    _controller = new Controller();
+    _scene.add(_controller);
 }
 
 /*************/
@@ -70,8 +73,9 @@ window.onmousedown = function(ev) {
         sy = ev.clientY;
         //var v = new THREE.Vector3((sx / _width) * 2 - 1, -(sy / _height) * 2 + 1, 0.5);
         //projector.unprojectVector(v, _camera);
+        var ratio = _width / _height;
         var v = new THREE.Vector3(((sx / _width) * 2 - 1) * cFOV,
-                                 (-(sy / _height) * 2 + 1) * cFOV,
+                                  (-(sy / _height) * 2 + 1) * cFOV / ratio,
                                   0.0);
         var rotMat = new THREE.Matrix4();
         rotMat.extractRotation(_camera.matrixWorld);
@@ -84,8 +88,7 @@ window.onmousedown = function(ev) {
         var intersects = rayCaster.intersectObject(_scene, true);
         if (intersects.length > 0) {
             var obj = _scene.getObjectById(intersects[0].object.id, true);
-            var father = obj.parent;
-            father.parent.remove(father);
+            _controller.setCurrent(obj);
         }
     }
 }
