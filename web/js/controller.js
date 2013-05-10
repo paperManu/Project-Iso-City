@@ -21,9 +21,8 @@ function Controller() {
 
         var cb = this.gui.add(target, last).onChange(function(v) {
             var object = controller.current;
-            for (var i = 0; i < properties.length - 1; i++)
-                object = object[properties[i]];
-            object[last] = v;
+            var parent = object.parent;
+            parent.setChildProperty(object, properties, v);
         });
         return cb;
     }
@@ -40,8 +39,8 @@ Controller.prototype.constructor = Controller;
 Controller.prototype.setCurrent = function(object) {
     this.current = object.parent;
     if (this.current) {
-        this.setXCb.setValue(object.parent.position.x);
-        this.setYCb.setValue(object.parent.position.y);
-        this.setZCb.setValue(object.parent.position.z);
+        this.setXCb.setValue(object.parent.position.x / object.parent.baseObjectSize);
+        this.setYCb.setValue(object.parent.position.y / object.parent.baseObjectSize);
+        this.setZCb.setValue(object.parent.position.z / object.parent.baseObjectSize);
     }
 }

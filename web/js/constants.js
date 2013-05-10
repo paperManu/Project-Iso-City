@@ -7,4 +7,4 @@ var cBaseBlocSize = 16;
 var cBaseElementSize = 4;
 
 // Camera constants
-var cFOV = 50; // Half of the orthographic "FOV"
+var cFOV = 50// Half of the orthographic "FOV"

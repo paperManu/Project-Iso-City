@@ -3,11 +3,14 @@
 // Class Grid, an Object3D which Blocs as children
 
 /*************/
-function Grid(w, h) {
+function Grid(w, h, gridSize) {
     THREE.Object3D.call(this);
 
     // Constants
-    this.baseSize = cBaseBlocSize;
+    if (gridSize === undefined)
+        this.baseSize = cBaseBlocSize;
+    else
+        this.baseSize = gridSize;
 
     // Attributes
     this.width = Math.max(1, w);
@@ -65,4 +68,43 @@ Grid.prototype.add = function(object, x, y) {
         return false;
     }
 
+}
+
+/*************/
+Grid.prototype.addBaseMesh = function(object) {
+    THREE.Object3D.prototype.add.call(this, object);
+}
+
+/*************/
+Grid.prototype.setChildProperty = function(object, propertyChain, value) {
+    if (object === undefined || propertyChain === undefined || value === undefined)
+        return;
+
+    var child = this.getObjectById(object.id);
+
+    if (propertyChain[0] === 'position') {
+        var axis = propertyChain[1];
+        var size, maxValue, step;
+        if (axis === 'x') {
+            size = object.getSize()[0];
+            maxValue = this.width;
+            step = this.baseSize
+        }
+        else if (axis === 'z') {
+            size = object.getSize()[2];
+            maxValue = this.height;
+            step = this.baseSize;
+        }
+        else {
+            step = 1;
+        }
+
+        if (value + size > maxValue || value < 0)
+            return false;
+
+        // TODO: check that there is enough room to move the object there
+        object['position'][axis] = value * step;
+
+        return true;
+    }
 }

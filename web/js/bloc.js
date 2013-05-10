@@ -4,26 +4,27 @@
 
 /*************/
 function Bloc() {
-    THREE.Object3D.call(this);
+    Grid.call(this, 16, 16, cBaseElementSize);
 
-    // Constants
-    this.baseSize = cBaseBlocSize;
+    this.baseObjectSize = cBaseBlocSize;
 
-    this.geometry = new THREE.CubeGeometry(this.baseSize, this.baseSize * 0.5, this.baseSize);
+    this.geometry = new THREE.CubeGeometry(cBaseBlocSize, cBaseBlocSize * 0.5, cBaseBlocSize);
     this.material = new THREE.MeshLambertMaterial({color: 0xBBBBBB});
 
     this.mesh = new THREE.Mesh(this.geometry, this.material);
-    this.add(this.mesh);
-    this.mesh.position.set(this.baseSize * 0.5,
-                           -this.baseSize * this.scale.y * 0.25,
-                           this.baseSize * 0.5);
+    this.addBaseMesh(this.mesh);
+    this.mesh.position.set(cBaseBlocSize * 0.5,
+                           -cBaseBlocSize * this.scale.y * 0.25,
+                           cBaseBlocSize * 0.5);
 
     // Attributes
     this.size = [1, 1, 0.5]; // Size of the bloc in units
-    this.floor = new THREE.Object3D(); // This object is always located on the floor of the bloc
+    // We adapt the grid size to match the given size
+    this.width = Math.floor(this.size[0] * cBaseBlocSize / cBaseElementSize);
+    this.height = Math.floor(this.size[1] * cBaseBlocSize / cBaseElementSize);
 }
 
-Bloc.prototype = Object.create(THREE.Object3D.prototype);
+Bloc.prototype = Object.create(Grid.prototype);
 Bloc.prototype.constructor = Bloc;
 
 /*************/
@@ -35,8 +36,11 @@ Bloc.prototype.setSize = function(h, w) {
         this.mesh.scale.z = w;
         this.mesh.scale.y = 0.5;
 
-        this.mesh.position.x = h * this.baseSize * 0.5;
-        this.mesh.position.z = w * this.baseSize * 0.5;
+        this.mesh.position.x = h * cBaseBlocSize * 0.5;
+        this.mesh.position.z = w * cBaseBlocSize * 0.5;
+
+        this.width = Math.floor(this.size[0] * cBaseBlocSize / cBaseElementSize);
+        this.height = Math.floor(this.size[1] * cBaseBlocSize / cBaseElementSize);
     }
 }
 

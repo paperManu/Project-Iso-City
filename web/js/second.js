@@ -18,9 +18,8 @@ function createScene() {
 
             building = new Building();
             building.name = "building";
-            bloc.add(building);
+            bloc.add(building, j, i);
             building.setSize(2, 1, 1);
-            building.setPosition(j, 0, i);
         }
     }
 

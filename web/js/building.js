@@ -8,18 +8,19 @@ function Building() {
 
     // Constants
     this.baseSize = cBaseElementSize;
+    this.baseObjectSize = cBaseElementSize;
 
     // Attributes
     this.size = [1, 1, 1]; // Size of the bloc in units
 
-    this.geometry = new THREE.CubeGeometry(this.baseSize,
-                                           this.baseSize,
-                                           this.baseSize);
+    this.geometry = new THREE.CubeGeometry(cBaseElementSize,
+                                           cBaseElementSize,
+                                           cBaseElementSize);
     this.material = new THREE.MeshLambertMaterial({color: 0x444444});
 
     this.mesh = new THREE.Mesh(this.geometry, this.material);
     this.add(this.mesh);
-    this.mesh.position.set(0, this.baseSize * this.size[1] * 0.5, 0);
+    this.mesh.position.set(0, cBaseElementSize * this.size[1] * 0.5, 0);
 }
 
 Building.prototype = Object.create(THREE.Object3D.prototype);
@@ -39,6 +40,11 @@ Building.prototype.setSize = function(h, w, d) {
                                         this.baseSize * this.size[1] * 0.5);
         this.mesh.position.z = this.mesh.scale.z * this.baseSize * 0.5;
     }
+}
+
+/*************/
+Building.prototype.getSize = function() {
+    return this.size;
 }
 
 /*************/
