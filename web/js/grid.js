@@ -1,110 +1,172 @@
 // Copyright (C) 2013 Emmanuel Durand
 //
-// Class Grid, an Object3D which Blocs as children
+// Class Grid, used to place items on it
 
 /*************/
-function Grid(w, h, gridSize) {
+function Grid(pGridSize, pWidth, pHeight) {
     THREE.Object3D.call(this);
-
-    // Constants
-    if (gridSize === undefined)
-        this.baseSize = cBaseBlocSize;
-    else
-        this.baseSize = gridSize;
+    var that = this;
 
     // Attributes
-    this.width = Math.max(1, w);
-    this.height = Math.max(1, h);
+    /**********/
+    this.gridSize= pGridSize;
+    this.width = Math.max(1, pWidth);
+    this.height = Math.max(1, pHeight);
 
-    this.grid = new ArrayBuffer(w * h);
-    this.bytes = new Uint8Array(this.grid);
-    for (var i = 0; i < this.bytes.length; i++) {
-        this.bytes[i] = 0;
+    this.size = [this.width * this.gridSize, this.height * this.gridSize];
+
+    this.grid = new ArrayBuffer(pWidth * pHeight);
+    this.gridBytes = new Uint8Array(this.grid);
+    for (var i = 0; i < this.gridBytes.length; ++i)
+        this.gridBytes[i] = 0;
+
+    // Private methods
+    /**********/
+    function checkRoom(x, y, size) {
+        if (x === undefined || y === undefined || size === undefined)
+            return false;
+
+        if (x + size.x > that.width || y + size.z > that.height)
+            return false;
+
+        var isRoom = true;
+        for (var i = x; i < x + size.x; i++)
+            for (var j = y; j < y + size.z; j++)
+                if (that.gridBytes[i + j * that.width] > 0)
+                    isRoom = false;
+
+        return isRoom
+    }
+
+    /**********/
+    function releaseRoom(x, y, size) {
+        if (x === undefined || y === undefined || size === undefined)
+            return false;
+
+        for (var i = x; i < x + size.x && i < that.width; i++)
+            for (var j = y; j < y + size.z && j < that.height; j++)
+                that.gridBytes[i + j * that.width] = 0;
+
+        return true;
+    }
+
+    /**********/
+    function occupyRoom(x, y, size) {
+        if (x === undefined || y === undefined || size === undefined)
+            return false;
+
+        for (var i = x; i < x + size.x && i < that.width; i++)
+            for (var j = y; j < y + size.z && j < that.height; j++)
+                that.gridBytes[i + j * that.width] = 255;
+
+        return true;
+    }
+
+    // Public methods
+    /**********/
+    this.setMesh = function(pMesh) {
+        if (pMesh === undefined)
+            return;
+
+        if (this.mesh != undefined)
+            this.remove(this.mesh);
+        else
+            this.mesh = undefined;
+
+        this.mesh = pMesh;
+        this.add(this.mesh);
+    }
+
+    /**********/
+    this.setDefaultMesh = function() {
+        var width = this.gridSize * this.width;
+        var height = this.gridSize * this.height;
+
+        var geometry = new THREE.CubeGeometry(width, this.gridSize, height);
+        var material = new THREE.MeshLambertMaterial({color: 0xBBBBBB});
+        var mesh = new THREE.Mesh(geometry, material);
+
+        this.setMesh(mesh);
+        this.mesh.position.set(this.size[0] * 0.5,
+                               -this.gridSize * 0.5,
+                               this.size[1] * 0.5);
+    }
+
+    /**********/
+    this.addObject = function(pObject, x, y) {
+        if (pObject === undefined)
+            return;
+
+        if (x === undefined)
+            x = 0;
+        if (y === undefined)
+            y = 0;
+
+        // Check that there is room for this block
+        var size = Object;
+        size.x = pObject.size[0] / this.gridSize;
+        size.z = pObject.size[1] / this.gridSize;
+        if (!checkRoom(x, y, size))
+            return false
+
+        THREE.Object3D.prototype.add.call(this, pObject);
+        pObject.position.x = x * this.gridSize;
+        pObject.position.y = 0;
+        pObject.position.z = y * this.gridSize;
+        occupyRoom(x, y, size);
+
+        return true;
+    }
+
+    /**********/
+    this.setObjectProperty = function(pObject, pPropChain, value) {
+        if (pObject === undefined || pPropChain === undefined)
+            return false;
+
+        var child = this.getObjectById(pObject.id);
+
+        if (pPropChain[0] === 'position') {
+            var axis = pPropChain[1];
+            var size = new Object();
+            var maxValue, x, y;
+
+            size.x = Math.ceil(pObject.size[0] / this.gridSize);
+            size.y = -1;
+            size.z = Math.ceil(pObject.size[1] / this.gridSize);
+
+            if (axis === 'x') {
+                x = value;
+                y = pObject.position.z / this.gridSize;
+                maxValue = this.width;
+            }
+            else if (axis === 'z') {
+                y = value;
+                x = pObject.position.x / this.gridSize;
+                maxValue = this.height;
+            }
+            else {
+                x = pObject.position.x / this.gridSize;
+                y = pObject.position.z / this.gridSize;
+                maxValue = undefined;
+            }
+
+            if (value + size[axis] > maxValue || value < 0)
+                return false;
+
+            // Check that there is room for the object
+            releaseRoom(Math.floor(pObject.position.x / this.gridSize),
+                        Math.floor(pObject.position.z / this.gridSize),
+                        size);
+
+            if (!checkRoom(x, y, size))
+                return false;
+
+            occupyRoom(x, y, size);
+
+            pObject['position'][axis] = value * this.gridSize;
+        }
     }
 }
 
 Grid.prototype = Object.create(THREE.Object3D.prototype);
 Grid.prototype.constructor = Grid;
-
-/*************/
-Grid.prototype.add = function(object, x, y) {
-    if (object === undefined)
-        return false;
-
-    if (x === undefined)
-        x = 0;
-    if (y === undefined)
-        y = 0;
-
-    // Check that there is room for this bloc
-    size = object.getSize();
-    if (x + size[0] > this.width || y + size[1] > this.height)
-        return false;
-
-    var isRoom = true;
-    for (var i = x; i < x + size[0]; i++) {
-        for (var j = y; j < y + size[1]; j++) {
-            if (this.bytes[i + j * this.width] > 0) {
-                isRoom = false;
-            }
-        }
-    }
-
-    if (isRoom === true) {
-        THREE.Object3D.prototype.add.call(this, object);
-        object.position.x = x * this.baseSize;
-        object.position.y = 0;
-        object.position.z = y * this.baseSize;
-
-        for (var i = x; i < x + size[0] && i < this.width; i++) {
-            for (var j = y; j < y + size[1] && j < this.height; j++) {
-                this.bytes[i + j * this.width] = 255;
-            }
-        }
-
-        return true;
-    }
-    else {
-        return false;
-    }
-
-}
-
-/*************/
-Grid.prototype.addBaseMesh = function(object) {
-    THREE.Object3D.prototype.add.call(this, object);
-}
-
-/*************/
-Grid.prototype.setChildProperty = function(object, propertyChain, value) {
-    if (object === undefined || propertyChain === undefined || value === undefined)
-        return;
-
-    var child = this.getObjectById(object.id);
-
-    if (propertyChain[0] === 'position') {
-        var axis = propertyChain[1];
-        var size, maxValue, step;
-        if (axis === 'x') {
-            size = object.getSize()[0];
-            maxValue = this.width;
-            step = this.baseSize
-        }
-        else if (axis === 'z') {
-            size = object.getSize()[2];
-            maxValue = this.height;
-            step = this.baseSize;
-        }
-        else {
-            step = 1;
-        }
-
-        if (value + size > maxValue || value < 0)
-            return false;
-
-        // TODO: check that there is enough room to move the object there
-        object['position'][axis] = value * step;
-
-        return true;
-    }
-}

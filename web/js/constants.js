@@ -3,8 +3,8 @@
 // Some useful constants and definitions
 
 // Geometry constants
-var cBaseBlocSize = 16;
-var cBaseElementSize = 4;
+var cBlocGridSize = 16;
+var cCityGridSize = 4;
 
 // Camera constants
-var cFOV = 50// Half of the orthographic "FOV"
+var cFOV = 50 // Half of the orthographic "FOV"

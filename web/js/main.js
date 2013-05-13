@@ -1,28 +1,28 @@
-function cos(x) {return Math.cos(x);}
-function sin(x) {return Math.sin(x);}
+// Copyright (C) 2013 Emmanuel Durand
+//
+// Main file
 
 var _renderer, _scene, _camera, _controller;
 var _height, _width;
 
 /*************/
 function createScene() {
-    grid = new Grid(4, 4);
-    grid.name = "grid";
+    var grid = new Grid(16, 4, 4);
+    grid.name = "city";
+    //grid.setDefaultMesh();
     _scene.add(grid);
 
     for (var i = 0; i < 4; i++) {
         for (var j = 0; j < 4; j++) {
-            bloc = new Bloc();
-            bloc.name = "ground";
-            var result = grid.add(bloc, i, j);
+            var bloc = new Grid(4, 4, 4);
+            bloc.setDefaultMesh();
+            grid.addObject(bloc, i, j);
 
-            building = new Building();
-            building.name = "building";
-            bloc.add(building, j, i);
-            building.setSize(2, 1, 1);
+            var building = new Item();
+            building.setDefaultMesh(4);
+            bloc.addObject(building, j, i);
         }
     }
-
 }
 
 /*************/
@@ -70,8 +70,6 @@ window.onmousedown = function(ev) {
         var projector = new THREE.Projector();
         sx = ev.clientX;
         sy = ev.clientY;
-        //var v = new THREE.Vector3((sx / _width) * 2 - 1, -(sy / _height) * 2 + 1, 0.5);
-        //projector.unprojectVector(v, _camera);
         var ratio = _width / _height;
         var v = new THREE.Vector3(((sx / _width) * 2 - 1) * cFOV,
                                   (-(sy / _height) * 2 + 1) * cFOV / ratio,
