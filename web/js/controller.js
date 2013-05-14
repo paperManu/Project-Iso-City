@@ -10,7 +10,8 @@ function Controller() {
     this.gui = new dat.GUI();
     this.current = undefined;
 
-    // Some methods
+    // Public methods
+    /*********/
     this.proxy = function(properties) {
         var controller = this;
         var target = controller;
@@ -30,17 +31,17 @@ function Controller() {
     this.setXCb = this.proxy(['position', 'x']);
     this.setYCb = this.proxy(['position', 'y']);
     this.setZCb = this.proxy(['position', 'z']);
+
+    /**********/
+    this.setCurrent = function(object) {
+        this.current = object.parent;
+        if (this.current) {
+            this.setXCb.setValue(object.parent.position.x / object.parent.parent.gridSize);
+            this.setYCb.setValue(object.parent.position.y / object.parent.parent.gridSize);
+            this.setZCb.setValue(object.parent.position.z / object.parent.parent.gridSize);
+        }
+    }
 }
 
 Controller.prototype = Object.create(THREE.Object3D.prototype);
 Controller.prototype.constructor = Controller;
-
-/**************/
-Controller.prototype.setCurrent = function(object) {
-    this.current = object.parent;
-    if (this.current) {
-        this.setXCb.setValue(object.parent.position.x / object.parent.parent.gridSize);
-        this.setYCb.setValue(object.parent.position.y / object.parent.parent.gridSize);
-        this.setZCb.setValue(object.parent.position.z / object.parent.parent.gridSize);
-    }
-}
