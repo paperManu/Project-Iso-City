@@ -8,7 +8,9 @@ function Controller() {
 
     // Attributes
     this.gui = new dat.GUI();
-    this.current = undefined;
+    this.selectedObject = undefined;
+
+    this.lastMousePosition = THREE.Vector3(0, 0, 0);
 
     // Public methods
     /*********/
@@ -21,9 +23,11 @@ function Controller() {
         var last = properties[properties.length - 1];
 
         var cb = this.gui.add(target, last).onChange(function(v) {
-            var object = controller.current;
-            var parent = object.parent;
-            parent.setObjectProperty(object, properties, v);
+            var object = controller.selectedObject;
+            if (object != undefined) {
+                var parent = object.parent;
+                parent.setObjectProperty(object, properties, v);
+            }
         });
         return cb;
     }
@@ -33,15 +37,99 @@ function Controller() {
     this.setZCb = this.proxy(['position', 'z']);
 
     /**********/
-    this.setCurrent = function(object) {
-        this.current = object.parent;
-        if (this.current) {
+    this.setSelectedObject = function(object) {
+        this.selectedObject = object.parent;
+        if (this.selectedObject) {
             this.setXCb.setValue(object.parent.position.x / object.parent.parent.gridSize);
             this.setYCb.setValue(object.parent.position.y / object.parent.parent.gridSize);
             this.setZCb.setValue(object.parent.position.z / object.parent.parent.gridSize);
         }
     }
+
+    /*********/
+    this.unsetSelectedObject = function() {
+        this.selectedObject = undefined;
+        this.setXCb.setValue(0);
+        this.setYCb.setValue(0);
+        this.setZCb.setValue(0);
+    }
+
+    // State machine callbacks
+    /*********/
+    this.onidle = function(event, from, to, v) {
+        if (from === 'moveOrDeselect'){
+            this.unsetSelectedObject();
+        }
+    }
+
+    /*********/
+    this.onentergrabOrSelect = function(event, from, to, v) {
+    }
+
+    /*********/
+    this.onselect = function(event, from, to, v) {
+        // Get the camera
+        var camera = this.parent.getObjectByName("Camera", true);
+
+        var projector = new THREE.Projector();
+        var rotMat = new THREE.Matrix4();
+        rotMat.extractRotation(camera.matrixWorld);
+        v = v.applyMatrix4(rotMat);
+        var n = new THREE.Vector3(0, 0, -1);
+        n = n.applyMatrix4(rotMat);
+        var position = v.clone();
+        position.add(camera.position);
+        var rayCaster = new THREE.Raycaster(position, n.normalize(), 10, 1000);
+        var intersects = rayCaster.intersectObject(_scene, true);
+        if (intersects.length > 0) {
+            var obj = this.parent.getObjectById(intersects[0].object.id, true);
+            this.setSelectedObject(obj);
+        }
+    }
+
+    /*********/
+    this.ongrabMove = function(event, from, to, v) {
+        this.lastMousePosition = v;
+        //console.log("pouet");
+    }
+
+    /*********/
+    this.onmouseMove = function(event, from, to, v) {
+        if (this.current === 'grabMove') {
+            var movement = v.clone();
+            movement.sub(this.lastMousePosition);
+            this.lastMousePosition = v;
+
+            var camera = this.parent.getObjectByName("Camera", true);
+            camera.translateX(-movement.x);
+            camera.translateY(-movement.y);
+        }
+    }
+
+    // State machine startup
+    this.startup();
 }
 
 Controller.prototype = Object.create(THREE.Object3D.prototype);
 Controller.prototype.constructor = Controller;
+
+/*************/
+StateMachine.create({
+    target: Controller.prototype,
+    error: function(event, from, to, args, errorCode, errorMessage) {
+    },
+    events: [
+        {name: 'startup',        from: 'none',          to: 'idle'},
+        {name: 'lMousePressed',  from: 'idle',          to: 'grabOrSelect'},
+        {name: 'lMousePressed',  from: 'select',        to: 'moveOrDeselect'},
+        {name: 'lMouseReleased', from: 'idle',          to: 'idle'},
+        {name: 'lMouseReleased', from: 'grabOrSelect',  to: 'select'},
+        {name: 'lMouseReleased', from: 'select',        to: 'select'},
+        {name: 'lMouseReleased', from: 'grabMove',      to: 'idle'},
+        {name: 'lMouseReleased', from: 'moveOrDeselect',to: 'idle'},
+        {name: 'lMouseReleased', from: 'move',          to: 'idle'},
+        {name: 'mouseMove',      from: 'grabOrSelect',  to: 'grabMove'},
+        {name: 'mouseMove',      from: 'grabMove',      to: 'grabMove'},
+        {name: 'mouseMove',      from: 'moveOrDeselect',to: 'move'},
+    ]
+});

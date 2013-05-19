@@ -4,6 +4,7 @@
 
 var _renderer, _scene, _camera, _controller;
 var _height, _width;
+var _stats;
 
 /*************/
 function createScene() {
@@ -29,6 +30,12 @@ function createScene() {
 var camPosition = new THREE.Vector3(2, 1.5, 2);
 var newCamPosition, newCamDirection;
 function init() {
+    _stats = new Stats();
+    _stats.domElement.style.position = 'absolute';
+    _stats.domElement.style.left = '0px';
+    _stats.domElement.style.top = '0px';
+    document.body.appendChild(_stats.domElement);
+
     _renderer = new THREE.WebGLRenderer();
     _renderer.setSize(window.innerWidth, window.innerHeight);
 
@@ -43,9 +50,11 @@ function init() {
 
     var ratio = _width / _height;
     _camera = new THREE.OrthographicCamera(-cFOV, cFOV, cFOV/ratio, -cFOV/ratio, 1, 1000);
+    _camera.name = "Camera";
     //_camera = new THREE.PerspectiveCamera(45, _width/_height, 1, 1000);
     _camera.position = camPosition.setLength(100);
     _camera.lookAt(camDirection);
+    _scene.add(_camera);
 
     newCamPosition = camPosition.clone();
     newCamDirection = camDirection.clone();
@@ -67,34 +76,47 @@ function init() {
 /*************/
 window.onmousedown = function(ev) {
     if (ev.target == _renderer.domElement) {
-        var projector = new THREE.Projector();
-        sx = ev.clientX;
-        sy = ev.clientY;
+        var sx = ev.clientX;
+        var sy = ev.clientY;
         var ratio = _width / _height;
         var v = new THREE.Vector3(((sx / _width) * 2 - 1) * cFOV,
                                   (-(sy / _height) * 2 + 1) * cFOV / ratio,
                                   0.0);
-        var rotMat = new THREE.Matrix4();
-        rotMat.extractRotation(_camera.matrixWorld);
-        v = v.applyMatrix4(rotMat);
-        var n = new THREE.Vector3(0, 0, -1);
-        n = n.applyMatrix4(rotMat);
-        var position = v.clone();
-        position.add(_camera.position);
-        var rayCaster = new THREE.Raycaster(position, n.normalize(), 10, 1000);
-        var intersects = rayCaster.intersectObject(_scene, true);
-        if (intersects.length > 0) {
-            var obj = _scene.getObjectById(intersects[0].object.id, true);
-            _controller.setCurrent(obj);
-        }
+
+        _controller.lMousePressed(v);
     }
 }
 
 /*************/
-function draw() {
-    requestAnimationFrame(draw);
+window.onmouseup = function(ev) {
+    var sx = ev.clientX;
+    var sy = ev.clientY;
+    var ratio = _width / _height;
+    var v = new THREE.Vector3(((sx / _width) * 2 - 1) * cFOV,
+                              (-(sy / _height) * 2 + 1) * cFOV / ratio,
+                              0.0);
 
+    _controller.lMouseReleased(v);
+}
+
+/*************/
+window.onmousemove = function(ev) {
+    var sx = ev.clientX;
+    var sy = ev.clientY;
+    var ratio = _width / _height;
+    var v = new THREE.Vector3(((sx / _width) * 2 - 1) * cFOV,
+                              (-(sy / _height) * 2 + 1) * cFOV / ratio,
+                              0.0);
+
+    _controller.mouseMove(v);
+}
+
+/*************/
+function draw() {
+    _stats.begin();
+    requestAnimationFrame(draw);
     _renderer.render(_scene, _camera);
+    _stats.end();
 }
 
 init();
