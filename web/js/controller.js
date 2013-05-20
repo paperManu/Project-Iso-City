@@ -10,7 +10,7 @@ function Controller() {
     this.gui = new dat.GUI();
     this.selectedObject = undefined;
 
-    this.lastMousePosition = THREE.Vector3(0, 0, 0);
+    lastMousePosition = THREE.Vector3(0, 0, 0);
 
     // Public methods
     /*********/
@@ -96,28 +96,32 @@ function Controller() {
 
     /*********/
     this.ongrabMove = function(event, from, to, v) {
-        this.lastMousePosition = v;
+        lastMousePosition = v;
     }
 
     /*********/
     this.onmouseMove = function(event, from, to, v) {
+        var camera = this.parent.getObjectByName("Camera", true);
         var movement = v.clone();
-        movement.sub(this.lastMousePosition);
-        this.lastMousePosition = v;
+        movement.sub(lastMousePosition);
+        lastMousePosition = v;
 
         if (this.current === 'grabMove') {
-            var camera = this.parent.getObjectByName("Camera", true);
             camera.translateX(-movement.x);
             camera.translateY(-movement.y);
         }
         else if (this.current === 'moveObject') {
+            var rotMat = new THREE.Matrix4();
+            rotMat.extractRotation(camera.matrixWorld);
+            movement.applyMatrix4(rotMat);
+            movement.setY(0.0);
             this.selectedObject.mouseMove(movement);
         }
     }
 
     /*********/
     this.onmoveObject = function(event, from, to, v) {
-        this.lastMousePosition = v;
+        lastMousePosition = v;
         this.selectedObject.grab();
     }
 

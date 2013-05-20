@@ -15,6 +15,8 @@ function createScene() {
 
     for (var i = 0; i < 4; i++) {
         for (var j = 0; j < 4; j++) {
+            if (Math.floor((i+j)/2)*2 != i+j)
+                continue;
             var bloc = new Grid(4, 4, 4);
             bloc.setDefaultMesh();
             grid.addObject(bloc, i, j);

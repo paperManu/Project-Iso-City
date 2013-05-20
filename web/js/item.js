@@ -11,7 +11,7 @@ function Item() {
     this.gridSize = 1;
 
     // Private attributes
-    meshPosition = THREE.Vector3(0, 0, 0);
+    _position = new THREE.Vector3(0, 0, 0);
 
     // Public methods
     /**********/
@@ -76,18 +76,21 @@ function Item() {
 
     /*********/
     this.ongrab = function(event, from, to) {
-        meshPosition = this.mesh.position.clone();
+        _position = this.position.clone();
     }
 
     /*********/
     this.onungrab = function(event, from, to) {
-        this.mesh.position.copy(meshPosition);
+        var newPosition = this.position.clone();
+        this.position.copy(_position);
+        this.parent.setObjectProperty(this, ['absolutePositionVector'], newPosition);
     }
 
     /*********/
     this.onmouseMove = function(event, from, to, v) {
-        this.mesh.translateX(v.x);
-        this.mesh.translateY(v.y);
+        this.translateX(v.x);
+        this.translateY(v.y);
+        this.translateZ(v.z);
     }
 
     // State machine startup

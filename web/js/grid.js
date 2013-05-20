@@ -20,6 +20,9 @@ function Grid(pGridSize, pWidth, pHeight) {
     for (var i = 0; i < this.gridBytes.length; ++i)
         this.gridBytes[i] = 0;
 
+    // Private attributes
+    _meshPosition = new THREE.Vector3(0, 0, 0);
+
     // Private methods
     /**********/
     function checkRoom(x, y, size) {
@@ -35,7 +38,7 @@ function Grid(pGridSize, pWidth, pHeight) {
                 if (that.gridBytes[i + j * that.width] > 0)
                     isRoom = false;
 
-        return isRoom
+                return isRoom
     }
 
     /**********/
@@ -165,8 +168,92 @@ function Grid(pGridSize, pWidth, pHeight) {
 
             pObject['position'][axis] = value * this.gridSize;
         }
+        else if (pPropChain[0] === 'absolutePositionVector') {
+            var size = new Object();
+            size.x = Math.ceil(pObject.size[0] / this.gridSize);
+            size.y = -1;
+            size.z = Math.ceil(pObject.size[1] / this.gridSize);
+
+            var x, y;
+            x = Math.floor(value.x / this.gridSize);
+            y = Math.floor(value.z / this.gridSize);
+
+            if (x + size.x > this.width || x < 0)
+                return false;
+            if (y + size.z > this.width || y < 0)
+                return false;
+
+            if (!checkRoom(x, y, size))
+                return false;
+
+            releaseRoom(Math.floor(pObject.position.x / this.gridSize),
+                        Math.floor(pObject.position.z / this.gridSize),
+                        size);
+
+            occupyRoom(x, y, size);
+            pObject.position.x = x * this.gridSize;
+            pObject.position.z = y * this.gridSize;
+        }
     }
+
+    // State machine callbacks
+    /*********/
+    this.onselect = function(event, from, to) {
+        var geometry = new THREE.CubeGeometry(this.size[0] + 1,
+                                              this.gridSize + 1,
+                                              this.size[1] + 1);
+        var material = new THREE.MeshLambertMaterial({color: 0xAA6600,
+                                                      wireframe: true,
+                                                      wireframeLinewidth: 2.0,
+                                                      emissive: 0xAA6600});
+        var halo = new THREE.Mesh(geometry, material);
+        halo.position.set(this.size[0]/2 + 0.5, -this.gridSize/2 + 0.5, this.size[1]/2 + 0.5);
+        halo.name = "selectionHalo";
+
+        this.add(halo);
+    }
+
+    /*********/
+    this.onrelease = function(event, from, to) {
+        var halo = this.getObjectByName("selectionHalo");
+        this.remove(halo);
+    }
+
+    /*********/
+    this.ongrab = function(event, from, to) {
+        _position = this.position.clone();
+    }
+
+    /*********/
+    this.onungrab = function(event, from, to) {
+        var newPosition = this.position.clone();
+        this.position.copy(_position);
+        this.parent.setObjectProperty(this, ['absolutePositionVector'], newPosition);
+    }
+
+    /*********/
+    this.onmouseMove = function(event, from, to, v) {
+        this.translateX(v.x);
+        this.translateY(v.y);
+        this.translateZ(v.z);
+    }
+
+    // State machine startup
+    this.startup();
 }
 
 Grid.prototype = Object.create(THREE.Object3D.prototype);
 Grid.prototype.constructor = Grid;
+
+/*************/
+StateMachine.create({
+    target: Grid.prototype,
+    events: [
+        {name: 'startup',   from: 'none',       to: 'idle'},
+        {name: 'select',    from: 'idle',       to: 'selected'},
+        {name: 'grab',      from: 'selected',   to: 'moveAround'},
+        {name: 'mouseMove', from: 'moveAround', to: 'moveAround'},
+        {name: 'ungrab',    from: 'moveAround', to: 'selected'},
+        {name: 'release',   from: 'selected',   to: 'idle'}
+    ]
+});
