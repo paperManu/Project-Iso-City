@@ -8,6 +8,10 @@ function Item() {
 
     // Attributes
     this.size = [1, 1];
+    this.gridSize = 1;
+
+    // Private attributes
+    meshPosition = THREE.Vector3(0, 0, 0);
 
     // Public methods
     /**********/
@@ -30,6 +34,7 @@ function Item() {
     /**********/
     this.setDefaultMesh = function(gridSize) {
         gridSize = Math.max(1, gridSize);
+        this.gridSize = gridSize;
 
         var width = gridSize;
         var height = gridSize * 3;
@@ -45,7 +50,62 @@ function Item() {
                                height * 0.5,
                                depth * 0.5);
     }
+
+    // State machine callbacks
+    /*********/
+    this.onselect = function(event, from, to) {
+        var geometry = new THREE.CubeGeometry(this.size[0] + 1,
+                                              5 * this.gridSize,
+                                              this.size[1] + 1);
+        var material = new THREE.MeshLambertMaterial({color: 0xAA6600,
+                                                      wireframe: true,
+                                                      wireframeLinewidth: 2.0,
+                                                      emissive: 0xAA6600});
+        var halo = new THREE.Mesh(geometry, material);
+        halo.position.set(this.size[0]/2 + 0.5, 2.5 * this.gridSize, this.size[1]/2 + 0.5);
+        halo.name = "selectionHalo";
+
+        this.add(halo);
+    }
+
+    /*********/
+    this.onrelease = function(event, from, to) {
+        var halo = this.getObjectByName("selectionHalo");
+        this.remove(halo);
+    }
+
+    /*********/
+    this.ongrab = function(event, from, to) {
+        meshPosition = this.mesh.position.clone();
+    }
+
+    /*********/
+    this.onungrab = function(event, from, to) {
+        this.mesh.position.copy(meshPosition);
+    }
+
+    /*********/
+    this.onmouseMove = function(event, from, to, v) {
+        this.mesh.translateX(v.x);
+        this.mesh.translateY(v.y);
+    }
+
+    // State machine startup
+    this.startup();
 }
 
 Item.prototype = Object.create(THREE.Object3D.prototype);
 Item.prototype.constructor = Item;
+
+/*************/
+StateMachine.create({
+    target: Item.prototype,
+    events: [
+        {name: 'startup',   from: 'none',       to: 'idle'},
+        {name: 'select',    from: 'idle',       to: 'selected'},
+        {name: 'grab',      from: 'selected',   to: 'moveAround'},
+        {name: 'mouseMove', from: 'moveAround', to: 'moveAround'},
+        {name: 'ungrab',    from: 'moveAround', to: 'selected'},
+        {name: 'release',   from: 'selected',   to: 'idle'}
+    ]
+});

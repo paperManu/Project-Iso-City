@@ -9,7 +9,7 @@ function Grid(pGridSize, pWidth, pHeight) {
 
     // Attributes
     /**********/
-    this.gridSize= pGridSize;
+    this.gridSize = pGridSize;
     this.width = Math.max(1, pWidth);
     this.height = Math.max(1, pHeight);
 
@@ -64,7 +64,7 @@ function Grid(pGridSize, pWidth, pHeight) {
 
     // Public methods
     /**********/
-  this.setMesh = function(pMesh) {
+    this.setMesh = function(pMesh) {
         if (pMesh === undefined)
             return;
 

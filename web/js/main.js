@@ -117,6 +117,7 @@ function draw() {
     requestAnimationFrame(draw);
     _renderer.render(_scene, _camera);
     _stats.end();
+    //console.log("state:", _controller.current);
 }
 
 init();

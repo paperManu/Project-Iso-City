@@ -43,11 +43,17 @@ function Controller() {
             this.setXCb.setValue(object.parent.position.x / object.parent.parent.gridSize);
             this.setYCb.setValue(object.parent.position.y / object.parent.parent.gridSize);
             this.setZCb.setValue(object.parent.position.z / object.parent.parent.gridSize);
+
+            this.selectedObject.select();
         }
     }
 
     /*********/
     this.unsetSelectedObject = function() {
+        if (this.selectedObject != undefined) {
+            this.selectedObject.release();
+        }
+
         this.selectedObject = undefined;
         this.setXCb.setValue(0);
         this.setYCb.setValue(0);
@@ -57,17 +63,18 @@ function Controller() {
     // State machine callbacks
     /*********/
     this.onidle = function(event, from, to, v) {
-        if (from === 'moveOrDeselect'){
+        if (from === 'moveOrDeselect') {
             this.unsetSelectedObject();
         }
     }
 
     /*********/
-    this.onentergrabOrSelect = function(event, from, to, v) {
-    }
-
-    /*********/
     this.onselect = function(event, from, to, v) {
+        if (from === 'moveObject') {
+            this.selectedObject.ungrab();
+            return;
+        }
+
         // Get the camera
         var camera = this.parent.getObjectByName("Camera", true);
 
@@ -90,20 +97,28 @@ function Controller() {
     /*********/
     this.ongrabMove = function(event, from, to, v) {
         this.lastMousePosition = v;
-        //console.log("pouet");
     }
 
     /*********/
     this.onmouseMove = function(event, from, to, v) {
-        if (this.current === 'grabMove') {
-            var movement = v.clone();
-            movement.sub(this.lastMousePosition);
-            this.lastMousePosition = v;
+        var movement = v.clone();
+        movement.sub(this.lastMousePosition);
+        this.lastMousePosition = v;
 
+        if (this.current === 'grabMove') {
             var camera = this.parent.getObjectByName("Camera", true);
             camera.translateX(-movement.x);
             camera.translateY(-movement.y);
         }
+        else if (this.current === 'moveObject') {
+            this.selectedObject.mouseMove(movement);
+        }
+    }
+
+    /*********/
+    this.onmoveObject = function(event, from, to, v) {
+        this.lastMousePosition = v;
+        this.selectedObject.grab();
     }
 
     // State machine startup
@@ -127,9 +142,10 @@ StateMachine.create({
         {name: 'lMouseReleased', from: 'select',        to: 'select'},
         {name: 'lMouseReleased', from: 'grabMove',      to: 'idle'},
         {name: 'lMouseReleased', from: 'moveOrDeselect',to: 'idle'},
-        {name: 'lMouseReleased', from: 'move',          to: 'idle'},
+        {name: 'lMouseReleased', from: 'moveObject',    to: 'select'},
         {name: 'mouseMove',      from: 'grabOrSelect',  to: 'grabMove'},
         {name: 'mouseMove',      from: 'grabMove',      to: 'grabMove'},
-        {name: 'mouseMove',      from: 'moveOrDeselect',to: 'move'},
+        {name: 'mouseMove',      from: 'moveOrDeselect',to: 'moveObject'},
+        {name: 'mouseMove',      from: 'moveObject',    to: 'moveObject'},
     ]
 });
