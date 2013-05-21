@@ -14,6 +14,37 @@ function Controller() {
 
     // Public methods
     /*********/
+    this.addBloc = function() {
+        this.reset();
+
+        var bloc = new Grid(4, 4, 4);
+        bloc.setDefaultMesh();
+        var building = new Item();
+        building.setDefaultMesh(4);
+        bloc.addObject(building, 0, 0);
+
+        var city = this.parent.getObjectByName("city");
+
+        var isPlaced = false;
+        for (var i = 0; i < city.width; i++) {
+            if (isPlaced)
+                break;
+
+            for (var j = 0; j < city.height; j++) {
+                if (isPlaced)
+                    break;
+                if (city.addObject(bloc, i, j))
+                    isPlaced = true;
+            }
+        }
+
+        if (isPlaced === true) {
+            this.setSelect();
+            this.setSelectedObject(bloc);
+        }
+    }
+
+    /*********/
     this.proxy = function(properties) {
         var controller = this;
         var target = controller;
@@ -35,14 +66,15 @@ function Controller() {
     this.setXCb = this.proxy(['position', 'x']);
     this.setYCb = this.proxy(['position', 'y']);
     this.setZCb = this.proxy(['position', 'z']);
+    this.gui.add(this, 'addBloc');
 
     /**********/
     this.setSelectedObject = function(object) {
-        this.selectedObject = object.parent;
+        this.selectedObject = object;
         if (this.selectedObject) {
-            this.setXCb.setValue(object.parent.position.x / object.parent.parent.gridSize);
-            this.setYCb.setValue(object.parent.position.y / object.parent.parent.gridSize);
-            this.setZCb.setValue(object.parent.position.z / object.parent.parent.gridSize);
+            this.setXCb.setValue(object.position.x / object.parent.gridSize);
+            this.setYCb.setValue(object.position.y / object.parent.gridSize);
+            this.setZCb.setValue(object.position.z / object.parent.gridSize);
 
             this.selectedObject.select();
         }
@@ -63,7 +95,7 @@ function Controller() {
     // State machine callbacks
     /*********/
     this.onidle = function(event, from, to, v) {
-        if (from === 'moveOrDeselect') {
+        if (from === 'moveOrDeselect' || from === 'select') {
             this.unsetSelectedObject();
         }
     }
@@ -90,7 +122,7 @@ function Controller() {
         var intersects = rayCaster.intersectObject(_scene, true);
         if (intersects.length > 0) {
             var obj = this.parent.getObjectById(intersects[0].object.id, true);
-            this.setSelectedObject(obj);
+            this.setSelectedObject(obj.parent);
         }
     }
 
@@ -151,5 +183,7 @@ StateMachine.create({
         {name: 'mouseMove',      from: 'grabMove',      to: 'grabMove'},
         {name: 'mouseMove',      from: 'moveOrDeselect',to: 'moveObject'},
         {name: 'mouseMove',      from: 'moveObject',    to: 'moveObject'},
+        {name: 'reset',          from: 'select',        to: 'idle'},
+        {name: 'setSelect',      from: 'idle',          to: 'select'}
     ]
 });

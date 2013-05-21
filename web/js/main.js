@@ -13,19 +13,13 @@ function createScene() {
     //grid.setDefaultMesh();
     _scene.add(grid);
 
-    for (var i = 0; i < 4; i++) {
-        for (var j = 0; j < 4; j++) {
-            if (Math.floor((i+j)/2)*2 != i+j)
-                continue;
-            var bloc = new Grid(4, 4, 4);
-            bloc.setDefaultMesh();
-            grid.addObject(bloc, i, j);
+    var bloc = new Grid(4, 4, 4);
+    bloc.setDefaultMesh();
+    grid.addObject(bloc, 0, 0);
 
-            var building = new Item();
-            building.setDefaultMesh(4);
-            bloc.addObject(building, j, i);
-        }
-    }
+    var building = new Item();
+    building.setDefaultMesh(4);
+    bloc.addObject(building, 0, 0);
 }
 
 /*************/
