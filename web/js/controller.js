@@ -185,9 +185,21 @@ function Controller() {
         else if (this.current === 'moveObject') {
             var rotMat = new THREE.Matrix4();
             rotMat.extractRotation(camera.matrixWorld);
-            movement.applyMatrix4(rotMat);
-            movement.setY(0.0);
-            this.selectedObject.mouseMove(movement);
+            var projected = movement.clone();
+            projected.applyMatrix4(rotMat);
+
+            var n = new THREE.Vector3(0, 0, -1);
+            n = n.applyMatrix4(rotMat);
+            var np = new THREE.Vector3(0, 1, 0);
+            var projMat = new THREE.Matrix3();
+            projMat.set(n.y, -n.x, 0,
+                        0, 0, 0,
+                        0, -n.z, n.y);
+
+            projected.applyMatrix3(projMat);
+            projected.divideScalar(n.dot(np));
+
+            this.selectedObject.mouseMove(projected);
         }
     }
 
