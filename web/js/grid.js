@@ -9,6 +9,7 @@ function Grid(pGridSize, pWidth, pHeight) {
 
     // Attributes
     /**********/
+    this.type = "Grid";
     this.gridSize = pGridSize;
     this.width = Math.max(1, pWidth);
     this.height = Math.max(1, pHeight);
@@ -119,6 +120,26 @@ function Grid(pGridSize, pWidth, pHeight) {
         occupyRoom(x, y, size);
 
         return true;
+    }
+
+    /**********/
+    this.removeObject = function(pObject) {
+        if (pObject === undefined)
+            return false;
+
+        var obj = this.getObjectById(pObject.id);
+        if (obj === undefined)
+            return false;
+
+        var position = obj.position.clone();
+        var size = new THREE.Vector3(0, 0, 0);
+        size.x = obj.size[0] / this.gridSize;
+        size.z = obj.size[1] / this.gridSize;
+        position.x = position.x / this.gridSize;
+        position.z = position.z / this.gridSize;
+
+        this.remove(obj);
+        releaseRoom(position.x, position.z, size);
     }
 
     /**********/

@@ -7,6 +7,7 @@ function Item() {
     THREE.Object3D.call(this);
 
     // Attributes
+    this.type = "Item";
     this.size = [1, 1];
     this.gridSize = 1;
 

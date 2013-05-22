@@ -33,7 +33,7 @@ function init() {
     document.body.appendChild(_stats.domElement);
 
     _renderer = new THREE.WebGLRenderer();
-    _renderer.setSize(window.innerWidth, window.innerHeight);
+    _renderer.setSize(window.innerWidth - 32, window.innerHeight - 32);
 
     document.body.appendChild(_renderer.domElement);
 
@@ -41,6 +41,7 @@ function init() {
     _height = window.innerHeight;
 
     _scene = new THREE.Scene();
+    _scene.type = "Scene";
 
     camDirection = new THREE.Vector3(16, 0, 16);
 
@@ -113,7 +114,7 @@ function draw() {
     requestAnimationFrame(draw);
     _renderer.render(_scene, _camera);
     _stats.end();
-    //console.log("state:", _controller.current);
+    console.log("state:", _controller.current);
 }
 
 init();

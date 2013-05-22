@@ -29,7 +29,6 @@ function Controller() {
         for (var i = 0; i < city.width; i++) {
             if (isPlaced)
                 break;
-
             for (var j = 0; j < city.height; j++) {
                 if (isPlaced)
                     break;
@@ -42,6 +41,41 @@ function Controller() {
             this.setSelect();
             this.setSelectedObject(bloc);
         }
+    }
+
+    /*********/
+    this.addItem = function() {
+        //this.reset();
+        if (this.selectedObject === undefined)
+            return;
+        if (this.selectedObject.type != "Grid")
+            return;
+
+        var grid = this.selectedObject;
+        var building = new Item();
+        building.setDefaultMesh(4);
+
+        var isPlaced = false;
+        for (var i = 0; i < grid.width; i++) {
+            if (isPlaced)
+                break;
+
+            for (var j = 0; j < grid.height; j++) {
+                if (isPlaced)
+                    break;
+                if (grid.addObject(building, i, j))
+                    isPlaced = true;
+            }
+        }
+    }
+
+    /*********/
+    this.delete = function() {
+        if (this.selectedObject === undefined)
+            return;
+
+        var obj = this.selectedObject;
+        obj.parent.removeObject(obj);
     }
 
     /*********/
@@ -67,6 +101,8 @@ function Controller() {
     this.setYCb = this.proxy(['position', 'y']);
     this.setZCb = this.proxy(['position', 'z']);
     this.gui.add(this, 'addBloc');
+    this.gui.add(this, 'addItem');
+    this.gui.add(this, 'delete');
 
     /**********/
     this.setSelectedObject = function(object) {
@@ -120,9 +156,13 @@ function Controller() {
         position.add(camera.position);
         var rayCaster = new THREE.Raycaster(position, n.normalize(), 10, 1000);
         var intersects = rayCaster.intersectObject(_scene, true);
+
         if (intersects.length > 0) {
             var obj = this.parent.getObjectById(intersects[0].object.id, true);
             this.setSelectedObject(obj.parent);
+        }
+        else {
+            this.reset();
         }
     }
 
