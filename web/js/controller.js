@@ -76,6 +76,8 @@ function Controller() {
 
         var obj = this.selectedObject;
         obj.parent.removeObject(obj);
+
+        this.reset();
     }
 
     /*********/
@@ -179,8 +181,23 @@ function Controller() {
         lastMousePosition = v;
 
         if (this.current === 'grabMove') {
-            camera.translateX(-movement.x);
-            camera.translateY(-movement.y);
+            var rotMat = new THREE.Matrix4();
+            rotMat.extractRotation(camera.matrixWorld);
+            var projected = movement.clone();
+            projected.applyMatrix4(rotMat);
+
+            var n = new THREE.Vector3(0, 0, -1);
+            n = n.applyMatrix4(rotMat);
+            var np = new THREE.Vector3(0, 1, 0);
+            var projMat = new THREE.Matrix3();
+            projMat.set(n.y, -n.x, 0,
+                        0, 0, 0,
+                        0, -n.z, n.y);
+
+            projected.applyMatrix3(projMat);
+            projected.divideScalar(n.dot(np));
+
+            camera.position.sub(projected);
         }
         else if (this.current === 'moveObject') {
             var rotMat = new THREE.Matrix4();
