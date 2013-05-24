@@ -46,10 +46,9 @@ function init() {
     camDirection = new THREE.Vector3(16, 0, 16);
 
     var ratio = _width / _height;
-    _camera = new THREE.OrthographicCamera(-cFOV, cFOV, cFOV/ratio, -cFOV/ratio, 1, 1000);
+    _camera = new THREE.OrthographicCamera(-cFOV, cFOV, cFOV/ratio, -cFOV/ratio, 1, 10000);
     _camera.name = "Camera";
-    //_camera = new THREE.PerspectiveCamera(45, _width/_height, 1, 1000);
-    _camera.position = camPosition.setLength(100);
+    _camera.position = camPosition.setLength(1000);
     _camera.lookAt(camDirection);
     _scene.add(_camera);
 
@@ -68,6 +67,7 @@ function init() {
 
     _controller = new Controller();
     _scene.add(_controller);
+    _controller.setCamera(_camera, ratio);
 }
 
 /*************/
@@ -75,10 +75,7 @@ window.onmousedown = function(ev) {
     if (ev.target == _renderer.domElement) {
         var sx = ev.clientX;
         var sy = ev.clientY;
-        var ratio = _width / _height;
-        var v = new THREE.Vector3(((sx / _width) * 2 - 1) * cFOV,
-                                  (-(sy / _height) * 2 + 1) * cFOV / ratio,
-                                  0.0);
+        var v = new THREE.Vector3(sx, sy, 0);
 
         _controller.lMousePressed(v);
     }
@@ -88,10 +85,7 @@ window.onmousedown = function(ev) {
 window.onmouseup = function(ev) {
     var sx = ev.clientX;
     var sy = ev.clientY;
-    var ratio = _width / _height;
-    var v = new THREE.Vector3(((sx / _width) * 2 - 1) * cFOV,
-                              (-(sy / _height) * 2 + 1) * cFOV / ratio,
-                              0.0);
+    var v = new THREE.Vector3(sx, sy, 0);
 
     _controller.lMouseReleased(v);
 }
@@ -100,10 +94,7 @@ window.onmouseup = function(ev) {
 window.onmousemove = function(ev) {
     var sx = ev.clientX;
     var sy = ev.clientY;
-    var ratio = _width / _height;
-    var v = new THREE.Vector3(((sx / _width) * 2 - 1) * cFOV,
-                              (-(sy / _height) * 2 + 1) * cFOV / ratio,
-                              0.0);
+    var v = new THREE.Vector3(sx, sy, 0);
 
     _controller.mouseMove(v);
 }

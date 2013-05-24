@@ -13,14 +13,16 @@ function Controller() {
 
     // Private attributes
     var camera = undefined;
+    var cameraRatio = 1.0;
+    var cameraDirty = true
     var cameraRotationMatrix = undefined;
     var cameraGroundProjectionMatrix = undefined;
-    lastMousePosition = THREE.Vector3(0, 0, 0);
+
+    var lastMousePosition = THREE.Vector3(0, 0, 0);
 
     // Private methods
     /*********/
     function initializeCamera() {
-        camera = that.parent.getObjectByName("Camera", true);
         cameraRotationMatrix = new THREE.Matrix4();
         cameraRotationMatrix.extractRotation(camera.matrixWorld);
 
@@ -32,6 +34,18 @@ function Controller() {
                     0, 0, 0,
                     0, -n.z, n.y);
         cameraGroundProjectionMatrix.multiplyScalar(1 / n.dot(np));
+
+        cameraDirty = false;
+    }
+
+    /*********/
+    function convertMouseToRect(v) {
+        var fov = camera.right;
+        var ratio = _width / _height;
+        var m = new THREE.Vector3(((v.x / _width) * 2 - 1) * fov,
+                                  (-(v.y / _height) * 2 + 1) * fov / cameraRatio,
+                                  0.0);
+        return m;
     }
 
     // Public methods
@@ -39,7 +53,7 @@ function Controller() {
     this.addBloc = function() {
         this.reset();
 
-        if (camera === undefined)
+        if (cameraDirty === true)
             initializeCamera();
 
         var position = camera.position.clone();
@@ -143,6 +157,13 @@ function Controller() {
     this.gui.add(this, 'delete');
 
     /**********/
+    this.setCamera = function(c, r) {
+        camera = c;
+        cameraRatio = r;
+        cameraDirty = true;
+    }
+
+    /**********/
     this.setSelectedObject = function(object) {
         this.selectedObject = object;
         if (this.selectedObject) {
@@ -166,6 +187,18 @@ function Controller() {
         this.setZCb.setValue(0);
     }
 
+    // UI callbacks
+    /*********/
+    $(document).mousewheel(function(event, delta, deltaX, deltaY) {
+        var fov = camera.right - cMousewheelSpeed * delta;
+        camera.left = -fov;
+        camera.right = fov;
+        camera.top= fov/cameraRatio;
+        camera.bottom = -fov/cameraRatio;
+        camera.updateProjectionMatrix();
+        cameraDirty = true;
+    });
+
     // State machine callbacks
     /*********/
     this.onidle = function(event, from, to, v) {
@@ -181,18 +214,17 @@ function Controller() {
             return;
         }
 
-        if (camera === undefined)
-            initalizeCamera();
+        if (cameraDirty === true)
+            initializeCamera();
 
+        v = convertMouseToRect(v);
         var projector = new THREE.Projector();
-        var rotMat = new THREE.Matrix4();
-        rotMat.extractRotation(camera.matrixWorld);
-        v = v.applyMatrix4(rotMat);
+        v = v.applyMatrix4(cameraRotationMatrix);
         var n = new THREE.Vector3(0, 0, -1);
-        n = n.applyMatrix4(rotMat);
+        n = n.applyMatrix4(cameraRotationMatrix);
         var position = v.clone();
         position.add(camera.position);
-        var rayCaster = new THREE.Raycaster(position, n.normalize(), 10, 1000);
+        var rayCaster = new THREE.Raycaster(position, n.normalize(), 10, 10000);
         var intersects = rayCaster.intersectObject(_scene, true);
 
         if (intersects.length > 0) {
@@ -206,17 +238,18 @@ function Controller() {
 
     /*********/
     this.ongrabMove = function(event, from, to, v) {
-        lastMousePosition = v;
+        //lastMousePosition = v;
+        lastMousePosition = convertMouseToRect(v);
     }
 
     /*********/
     this.onmouseMove = function(event, from, to, v) {
-        if (camera === undefined)
+        if (cameraDirty === true)
             initializeCamera();
 
-        var movement = v.clone();
+        var movement = convertMouseToRect(v);
         movement.sub(lastMousePosition);
-        lastMousePosition = v;
+        lastMousePosition = convertMouseToRect(v);
 
         if (this.current === 'grabMove') {
             var projected = movement.clone();
@@ -234,7 +267,7 @@ function Controller() {
 
     /*********/
     this.onmoveObject = function(event, from, to, v) {
-        lastMousePosition = v;
+        lastMousePosition = convertMouseToRect(v);
         this.selectedObject.grab();
     }
 
