@@ -248,6 +248,8 @@ function Grid(pGridSize, pWidth, pHeight) {
     /*********/
     this.onungrab = function(event, from, to) {
         var newPosition = this.position.clone();
+        newPosition.x += this.size[0] / 2;
+        newPosition.z += this.size[1] / 2;
         this.position.copy(_position);
         this.parent.setObjectProperty(this, ['absolutePositionVector'], newPosition);
     }
