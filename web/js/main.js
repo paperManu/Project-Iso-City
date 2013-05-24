@@ -8,7 +8,7 @@ var _stats;
 
 /*************/
 function createScene() {
-    var grid = new Grid(16, 4, 4);
+    var grid = new Grid(16, 16, 16);
     grid.name = "city";
     //grid.setDefaultMesh();
     _scene.add(grid);

@@ -5,17 +5,46 @@
 /*************/
 function Controller() {
     THREE.Object3D.call(this);
+    var that = this;
 
     // Attributes
     this.gui = new dat.GUI();
     this.selectedObject = undefined;
 
+    // Private attributes
+    var camera = undefined;
+    var cameraRotationMatrix = undefined;
+    var cameraGroundProjectionMatrix = undefined;
     lastMousePosition = THREE.Vector3(0, 0, 0);
+
+    // Private methods
+    /*********/
+    function initializeCamera() {
+        camera = that.parent.getObjectByName("Camera", true);
+        cameraRotationMatrix = new THREE.Matrix4();
+        cameraRotationMatrix.extractRotation(camera.matrixWorld);
+
+        var n = new THREE.Vector3(0, 0, -1);
+        n = n.applyMatrix4(cameraRotationMatrix);
+        var np = new THREE.Vector3(0, 1, 0);
+        cameraGroundProjectionMatrix = new THREE.Matrix3();
+        cameraGroundProjectionMatrix.set(n.y, -n.x, 0,
+                    0, 0, 0,
+                    0, -n.z, n.y);
+        cameraGroundProjectionMatrix.multiplyScalar(1 / n.dot(np));
+    }
 
     // Public methods
     /*********/
     this.addBloc = function() {
         this.reset();
+
+        if (camera === undefined)
+            initializeCamera();
+
+        var position = camera.position.clone();
+        var target = position.clone();
+        target.applyMatrix3(cameraGroundProjectionMatrix);
 
         var bloc = new Grid(4, 4, 4);
         bloc.setDefaultMesh();
@@ -24,12 +53,19 @@ function Controller() {
         bloc.addObject(building, 0, 0);
 
         var city = this.parent.getObjectByName("city");
+        var x = Math.abs(Math.floor(target.x / city.gridSize));
+        var y = Math.abs(Math.floor(target.z / city.gridSize));
 
         var isPlaced = false;
-        for (var i = 0; i < city.width; i++) {
+        var maxDistance = 2;
+        var xsign = 1;
+        var xstep = 1;
+        for (var i = x; i < city.width && i >= 0 && Math.abs(x - i) <= maxDistance; i += xstep*xsign, xstep += 1, xsign *= -1) {
             if (isPlaced)
                 break;
-            for (var j = 0; j < city.height; j++) {
+            var ysign = 1;
+            var ystep = 1;
+            for (var j = y; j < city.height && j >= 0 && Math.abs(y - j) <= maxDistance; j += ystep*ysign, ystep += 1, ysign *= -1) {
                 if (isPlaced)
                     break;
                 if (city.addObject(bloc, i, j))
@@ -145,8 +181,8 @@ function Controller() {
             return;
         }
 
-        // Get the camera
-        var camera = this.parent.getObjectByName("Camera", true);
+        if (camera === undefined)
+            initalizeCamera();
 
         var projector = new THREE.Projector();
         var rotMat = new THREE.Matrix4();
@@ -175,47 +211,23 @@ function Controller() {
 
     /*********/
     this.onmouseMove = function(event, from, to, v) {
-        var camera = this.parent.getObjectByName("Camera", true);
+        if (camera === undefined)
+            initializeCamera();
+
         var movement = v.clone();
         movement.sub(lastMousePosition);
         lastMousePosition = v;
 
         if (this.current === 'grabMove') {
-            var rotMat = new THREE.Matrix4();
-            rotMat.extractRotation(camera.matrixWorld);
             var projected = movement.clone();
-            projected.applyMatrix4(rotMat);
-
-            var n = new THREE.Vector3(0, 0, -1);
-            n = n.applyMatrix4(rotMat);
-            var np = new THREE.Vector3(0, 1, 0);
-            var projMat = new THREE.Matrix3();
-            projMat.set(n.y, -n.x, 0,
-                        0, 0, 0,
-                        0, -n.z, n.y);
-
-            projected.applyMatrix3(projMat);
-            projected.divideScalar(n.dot(np));
-
+            projected.applyMatrix4(cameraRotationMatrix);
+            projected.applyMatrix3(cameraGroundProjectionMatrix);
             camera.position.sub(projected);
         }
         else if (this.current === 'moveObject') {
-            var rotMat = new THREE.Matrix4();
-            rotMat.extractRotation(camera.matrixWorld);
             var projected = movement.clone();
-            projected.applyMatrix4(rotMat);
-
-            var n = new THREE.Vector3(0, 0, -1);
-            n = n.applyMatrix4(rotMat);
-            var np = new THREE.Vector3(0, 1, 0);
-            var projMat = new THREE.Matrix3();
-            projMat.set(n.y, -n.x, 0,
-                        0, 0, 0,
-                        0, -n.z, n.y);
-
-            projected.applyMatrix3(projMat);
-            projected.divideScalar(n.dot(np));
-
+            projected.applyMatrix4(cameraRotationMatrix);
+            projected.applyMatrix3(cameraGroundProjectionMatrix);
             this.selectedObject.mouseMove(projected);
         }
     }
