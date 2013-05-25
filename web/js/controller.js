@@ -49,6 +49,37 @@ function Controller() {
         return m;
     }
 
+    /*********/
+    function drawGrid() {
+        if (that.selectedObject === undefined)
+            return;
+
+
+        var size = that.selectedObject.parent.gridSize;
+        var width = that.selectedObject.parent.width;
+        var height = that.selectedObject.parent.height;
+        var posX = that.selectedObject.parent.position.x;
+        var posZ = that.selectedObject.parent.position.z;
+
+        var geometry = new THREE.Geometry();
+
+        for (var i = 0; i <= width; i++) {
+            geometry.vertices.push(new THREE.Vector3(posX, 0, posZ + i * size));
+            geometry.vertices.push(new THREE.Vector3(posX + size * height, 0, posZ + i * size));
+        }
+        for (var i = 0; i <= height; i++) {
+            geometry.vertices.push(new THREE.Vector3(posX + i * size, 0, posZ));
+            geometry.vertices.push(new THREE.Vector3(posX + i * size, 0, posZ + width * size));
+        }
+
+        console.log("pouet");
+        var mat = new THREE.LineBasicMaterial({color: 0xAAAAAA, opacity: 0.5});
+        var line = new THREE.Line(geometry, mat);
+        line.type = THREE.LinePieces;
+        line.name = "lineGrid";
+        that.parent.add(line);
+    }
+
     // Public methods
     /*********/
     this.addBloc = function() {
@@ -91,6 +122,7 @@ function Controller() {
         if (isPlaced === true) {
             this.setSelect();
             this.setSelectedObject(bloc);
+            drawGrid();
         }
     }
 
@@ -114,8 +146,10 @@ function Controller() {
             for (var j = 0; j < grid.height; j++) {
                 if (isPlaced)
                     break;
-                if (grid.addObject(building, i, j))
+                if (grid.addObject(building, i, j)) {
                     isPlaced = true;
+                    drawGrid();
+                }
             }
         }
     }
@@ -173,6 +207,10 @@ function Controller() {
         if (this.selectedObject != undefined) {
             this.selectedObject.release();
         }
+
+        var line = this.parent.getObjectByName("lineGrid");
+        if (line != undefined)
+            this.parent.remove(line);
 
         this.selectedObject = undefined;
         this.setXCb.setValue(0);
@@ -256,6 +294,7 @@ function Controller() {
         if (intersects.length > 0) {
             var obj = this.parent.getObjectById(intersects[0].object.id, true);
             this.setSelectedObject(obj.parent);
+            drawGrid();
         }
         else {
             this.reset();
