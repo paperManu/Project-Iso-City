@@ -17,25 +17,22 @@ function Item(gridSize) {
     else
         _gridSize = Math.max(1, Math.floor(gridSize));
 
-    _position = new THREE.Vector3(0, 0, 0);
+    var _position = new THREE.Vector3(0, 0, 0);
 
     // Public methods
     /**********/
-    this.setMesh = function(pMesh, pSize) {
+    this.setMesh = function(pMesh) {
         if (pMesh === undefined)
             return;
 
-        if (pSize != undefined && pSize.length === 2) {
-            this.size[0] = pSize[0] * _gridSize;
-            this.size[1] = pSize[1] * _gridSize;
-        }
-        else {
-            this.size[0] = _gridSize;
-            this.size[1] = _gridSize;
-        }
-
         if (this.mesh != undefined)
             this.remove(this.mesh);
+
+        pMesh.geometry.computeBoundingBox();
+        var bbox = pMesh.geometry.boundingBox;
+        this.size[0] = Math.ceil((bbox.max.x - bbox.min.x) / _gridSize) * _gridSize;
+        this.size[1] = Math.ceil((bbox.max.z - bbox.min.z) / _gridSize) * _gridSize;
+        this.size[2] = Math.ceil((bbox.max.y - bbox.min.y) / _gridSize) * _gridSize;
 
         this.mesh = pMesh;
         this.add(this.mesh);
@@ -51,28 +48,25 @@ function Item(gridSize) {
         var material = new THREE.MeshLambertMaterial({color: 0x444444});
         var mesh = new THREE.Mesh(geometry, material);
 
-        this.mesh = mesh;
-        this.setMesh(mesh, [width, depth]);
+        //this.mesh = mesh;
+        this.setMesh(mesh);
         this.mesh.position.set(width * 0.5,
                                height * 0.5,
                                depth * 0.5);
-
-        this.size[0] = _gridSize;
-        this.size[1] = _gridSize;
     }
 
     // State machine callbacks
     /*********/
     this.onselect = function(event, from, to) {
         var geometry = new THREE.CubeGeometry(this.size[0] + 1,
-                                              5 * _gridSize,
+                                              this.size[2] + 1,
                                               this.size[1] + 1);
         var material = new THREE.MeshLambertMaterial({color: 0xAA6600,
                                                       wireframe: true,
                                                       wireframeLinewidth: 2.0,
                                                       emissive: 0xAA6600});
         var halo = new THREE.Mesh(geometry, material);
-        halo.position.set(this.size[0]/2, 2.5 * _gridSize, this.size[1]/2);
+        halo.position.set(this.size[0]/2, this.size[2]/2 + 0.5, this.size[1]/2);
         halo.name = "selectionHalo";
 
         this.add(halo);

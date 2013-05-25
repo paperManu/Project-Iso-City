@@ -10,6 +10,7 @@ function Controller() {
     // Attributes
     this.gui = new dat.GUI();
     this.selectedObject = undefined;
+    this.meshPath = '';
 
     // Private attributes
     var camera = undefined;
@@ -130,31 +131,23 @@ function Controller() {
         this.reset();
     }
 
-    /*********/
-    this.proxy = function(properties) {
-        var controller = this;
-        var target = controller;
-        for (var i = 0; i < properties.length - 1; i++)
-            target = target[properties[i]];
+    /**********/
+    this.loadMesh = function() {
+        if (this.selectedObject === undefined)
+            return;
 
-        var last = properties[properties.length - 1];
+        if (this.meshPath === '') {
+            this.selectedObject.setDefaultMesh();
+            return;
+        }
 
-        var cb = this.gui.add(target, last).onChange(function(v) {
-            var object = controller.selectedObject;
-            if (object != undefined) {
-                var parent = object.parent;
-                parent.setObjectProperty(object, properties, v);
-            }
+        var loader = new THREE.JSONLoader(true);
+        loader.load(this.meshPath, function(geometry, material) {
+            var mat = new THREE.MeshFaceMaterial(material)
+            var mesh = new THREE.Mesh(geometry, mat);
+            that.selectedObject.setMesh(mesh);
         });
-        return cb;
     }
-
-    this.setXCb = this.proxy(['position', 'x']);
-    this.setYCb = this.proxy(['position', 'y']);
-    this.setZCb = this.proxy(['position', 'z']);
-    this.gui.add(this, 'addBloc');
-    this.gui.add(this, 'addItem');
-    this.gui.add(this, 'delete');
 
     /**********/
     this.setCamera = function(c, r) {
@@ -186,6 +179,37 @@ function Controller() {
         this.setYCb.setValue(0);
         this.setZCb.setValue(0);
     }
+
+    // dat.gui definition
+    /*********/
+    this.proxy = function(properties) {
+        var controller = this;
+        var target = controller;
+        for (var i = 0; i < properties.length - 1; i++)
+            target = target[properties[i]];
+
+        var last = properties[properties.length - 1];
+
+        var cb = this.gui.add(target, last).onChange(function(v) {
+            var object = controller.selectedObject;
+            if (object != undefined) {
+                var parent = object.parent;
+                parent.setObjectProperty(object, properties, v);
+            }
+        });
+        return cb;
+    }
+
+    this.setXCb = this.proxy(['position', 'x']);
+    this.setYCb = this.proxy(['position', 'y']);
+    this.setZCb = this.proxy(['position', 'z']);
+    var commandFolder = this.gui.addFolder('Commands');
+    commandFolder.add(this, 'addBloc');
+    commandFolder.add(this, 'addItem');
+    commandFolder.add(this, 'delete');
+    var loadFolder = this.gui.addFolder('Load mesh');
+    loadFolder.add(this, 'meshPath');
+    loadFolder.add(this, 'loadMesh');
 
     // UI callbacks
     /*********/
