@@ -62,7 +62,7 @@ function Controller() {
 
         var bloc = new Grid(4, 4, 4);
         bloc.setDefaultMesh();
-        var building = new Item();
+        var building = new Item(cBlocGridSize);
         building.setDefaultMesh(4);
         bloc.addObject(building, 0, 0);
 
@@ -102,7 +102,7 @@ function Controller() {
             return;
 
         var grid = this.selectedObject;
-        var building = new Item();
+        var building = new Item(cBlocGridSize);
         building.setDefaultMesh(4);
 
         var isPlaced = false;
@@ -191,6 +191,8 @@ function Controller() {
     /*********/
     $(document).mousewheel(function(event, delta, deltaX, deltaY) {
         var fov = camera.right - cMousewheelSpeed * delta;
+        fov = fov < cMinFOV ? cMinFOV : fov;
+        fov = fov > cMaxFOV ? cMaxFOV : fov;
         camera.left = -fov;
         camera.right = fov;
         camera.top= fov/cameraRatio;

@@ -3,15 +3,20 @@
 // Class Item, representing objects
 
 /*************/
-function Item() {
+function Item(gridSize) {
     THREE.Object3D.call(this);
 
     // Attributes
     this.type = "Item";
     this.size = [1, 1];
-    this.gridSize = 1;
 
     // Private attributes
+    var _gridSize;
+    if (gridSize === undefined)
+        _gridSize = 1;
+    else
+        _gridSize = Math.max(1, Math.floor(gridSize));
+
     _position = new THREE.Vector3(0, 0, 0);
 
     // Public methods
@@ -20,9 +25,13 @@ function Item() {
         if (pMesh === undefined)
             return;
 
-        if (pSize.length === 2) {
-            this.size[0] = pSize[0];
-            this.size[1] = pSize[1];
+        if (pSize != undefined && pSize.length === 2) {
+            this.size[0] = pSize[0] * _gridSize;
+            this.size[1] = pSize[1] * _gridSize;
+        }
+        else {
+            this.size[0] = _gridSize;
+            this.size[1] = _gridSize;
         }
 
         if (this.mesh != undefined)
@@ -33,13 +42,10 @@ function Item() {
     }
 
     /**********/
-    this.setDefaultMesh = function(gridSize) {
-        gridSize = Math.max(1, gridSize);
-        this.gridSize = gridSize;
-
-        var width = gridSize;
-        var height = gridSize * 3;
-        var depth = gridSize;
+    this.setDefaultMesh = function() {
+        var width = _gridSize;
+        var height = _gridSize * 3;
+        var depth = _gridSize;
 
         var geometry = new THREE.CubeGeometry(width, height, depth);
         var material = new THREE.MeshLambertMaterial({color: 0x444444});
@@ -50,20 +56,23 @@ function Item() {
         this.mesh.position.set(width * 0.5,
                                height * 0.5,
                                depth * 0.5);
+
+        this.size[0] = _gridSize;
+        this.size[1] = _gridSize;
     }
 
     // State machine callbacks
     /*********/
     this.onselect = function(event, from, to) {
         var geometry = new THREE.CubeGeometry(this.size[0] + 1,
-                                              5 * this.gridSize,
+                                              5 * _gridSize,
                                               this.size[1] + 1);
         var material = new THREE.MeshLambertMaterial({color: 0xAA6600,
                                                       wireframe: true,
                                                       wireframeLinewidth: 2.0,
                                                       emissive: 0xAA6600});
         var halo = new THREE.Mesh(geometry, material);
-        halo.position.set(this.size[0]/2 + 0.5, 2.5 * this.gridSize, this.size[1]/2 + 0.5);
+        halo.position.set(this.size[0]/2, 2.5 * _gridSize, this.size[1]/2);
         halo.name = "selectionHalo";
 
         this.add(halo);

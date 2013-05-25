@@ -8,17 +8,16 @@ var _stats;
 
 /*************/
 function createScene() {
-    var grid = new Grid(16, 16, 16);
+    var grid = new Grid(cCityGridSize, 32, 32);
     grid.name = "city";
-    //grid.setDefaultMesh();
     _scene.add(grid);
 
     var bloc = new Grid(4, 4, 4);
     bloc.setDefaultMesh();
     grid.addObject(bloc, 0, 0);
 
-    var building = new Item();
-    building.setDefaultMesh(4);
+    var building = new Item(cBlocGridSize);
+    building.setDefaultMesh();
     bloc.addObject(building, 0, 0);
 }
 
@@ -108,5 +107,7 @@ function draw() {
     //console.log("state:", _controller.current);
 }
 
-init();
-draw();
+$(document).ready(function() {
+    init();
+    draw();
+})

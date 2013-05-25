@@ -228,7 +228,7 @@ function Grid(pGridSize, pWidth, pHeight) {
                                                       wireframeLinewidth: 2.0,
                                                       emissive: 0xAA6600});
         var halo = new THREE.Mesh(geometry, material);
-        halo.position.set(this.size[0]/2 + 0.5, -this.gridSize/2 + 0.5, this.size[1]/2 + 0.5);
+        halo.position.set(this.size[0]/2, -this.gridSize/2, this.size[1]/2);
         halo.name = "selectionHalo";
 
         this.add(halo);
