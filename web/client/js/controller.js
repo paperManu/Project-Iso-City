@@ -54,7 +54,6 @@ function Controller() {
         if (that.selectedObject === undefined)
             return;
 
-
         var size = that.selectedObject.parent.gridSize;
         var width = that.selectedObject.parent.width;
         var height = that.selectedObject.parent.height;
@@ -72,8 +71,7 @@ function Controller() {
             geometry.vertices.push(new THREE.Vector3(posX + i * size, 0, posZ + width * size));
         }
 
-        console.log("pouet");
-        var mat = new THREE.LineBasicMaterial({color: 0xAAAAAA, opacity: 0.5});
+        var mat = new THREE.LineBasicMaterial({color: 0x222222, opacity: 0.5});
         var line = new THREE.Line(geometry, mat);
         line.type = THREE.LinePieces;
         line.name = "lineGrid";

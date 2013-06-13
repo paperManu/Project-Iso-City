@@ -2,6 +2,12 @@
 //
 // Main file
 
+/*************/
+// Socket.io related
+var socket = io.connect();
+
+/*************/
+// Three.js related
 var _renderer, _scene, _camera, _controller;
 var _height, _width;
 var _stats;
