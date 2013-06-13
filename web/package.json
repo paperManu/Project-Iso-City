@@ -1,0 +1,24 @@
+{
+  "name": "iso",
+  "version": "0.0.1",
+  "description": "Project ISO City",
+  "main": "server.js",
+  "dependencies": {
+    "express": "~3.2.6",
+    "socket.io": "~0.9.16"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:paperManu/Project-Iso-City.git"
+  },
+  "author": "Emmanuel Durand",
+  "license": "BSD",
+  "bugs": {
+    "url": "https://github.com/paperManu/Project-Iso-City/issues"
+  }
+}
